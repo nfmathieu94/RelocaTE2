@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import sys
 from collections import defaultdict
 import re
@@ -16,7 +16,7 @@ python relocaTE_align.py scripts path genome regex_file TE exper bowtie2
 
 Align flanking_fq to genome in unpaired and paired manner
     '''
-    print message
+    print(message)
 
 def createdir(dirname):
     if not os.path.exists(dirname):
@@ -25,7 +25,7 @@ def createdir(dirname):
 ##write content to new file
 def writefile(outfile, lines):
     ofile = open(outfile, 'w')
-    print >> ofile, lines
+    print(lines, file=ofile)
     ofile.close()
 
 
@@ -36,7 +36,7 @@ def readtable(infile):
             line = line.rstrip()
             if len(line) > 2: 
                 unit = re.split(r'\t',line)
-                if not data.has_key(unit[0]):
+                if unit[0] not in data:
                     data[unit[0]] = unit[1]
     return data
 
@@ -51,19 +51,19 @@ def write_repeat_name_chr(read_chr_info, repeat_name, repeat_name_chr, read_orde
                 
                 read_name = unit[0]
                 if read_name[-2:] == '/1' or read_name[-2:] == '/2': read_name = read_name[:-2]
-                if read_chr_info.has_key(read_name):
-                    if read_chr_info[read_name].has_key(int(read_order)):
+                if read_name in read_chr_info:
+                    if int(read_order) in read_chr_info[read_name]:
                         #by default set repeat to itself
-                        print >> ofile, '%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], read_chr_info[read_name][int(read_order)])
-                    elif read_chr_info[read_name].has_key(int(read_order_pair)):
+                        print('%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], read_chr_info[read_name][int(read_order)]), file=ofile)
+                    elif int(read_order_pair) in read_chr_info[read_name]:
                         #if self is not aligned, set to pair
-                        print >> ofile, '%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], read_chr_info[read_name][int(read_order_pair)])
-                    elif read_chr_info[read_name].has_key(0):
+                        print('%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], read_chr_info[read_name][int(read_order_pair)]), file=ofile)
+                    elif 0 in read_chr_info[read_name]:
                         #set to unpaired
-                        print >> ofile, '%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], read_chr_info[read_name][0])
+                        print('%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], read_chr_info[read_name][0]), file=ofile)
                     else:
                         #should not happend, or very rare.
-                        print >> ofile, '%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], 'NA')
+                        print('%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], 'NA'), file=ofile)
                 else:
                     #not in alignment, not usefull at all
                     #print >> ofile, '%s\t%s\t%s\t%s' %(unit[0], unit[1], unit[2], 'NA')
@@ -115,12 +115,12 @@ def get_unpaired_info_chr(unpaired_bam, unpaired_info, unpaired_info_chr):
             tLen     = int(rlens[record.reference_id])
             tStart   = int(record.reference_start)
             tEnd     = int(record.reference_end) - 1 
-            if info_dict.has_key(qName):
-                print >> ofile, '%s\t%s\t%s' %(qName, info_dict[qName], tName)
+            if qName in info_dict:
+                print('%s\t%s\t%s' %(qName, info_dict[qName], tName), file=ofile)
         else:
             qName    = record.query_name
-            if info_dict.has_key(qName):
-                print >> ofile, '%s\t%s\t%s' %(qName, info_dict[qName], 'NA')
+            if qName in info_dict:
+                print('%s\t%s\t%s' %(qName, info_dict[qName], 'NA'), file=ofile)
     ofile.close()
 
 def fastq2id(fastq, id_file):
@@ -165,21 +165,21 @@ def paired_id(fullread1_id, fullread2_id, fullreadu_id):
             id2[i] = r_id.search(id2[i]).groups(0)[0]
             flag2  = 1
         if flag1 == 1 or flag2 == 1:
-            print >> ofile_id1, id1[i]
-            print >> ofile_id2, id2[i]
+            print(id1[i], file=ofile_id1)
+            print(id2[i], file=ofile_id2)
     #for unpaired junction reads, if read is junction read we output paired-end id/sequence to fullread1 and fullread2
     for i in range(len(idu)):
         if r_id.search(idu[i]):
             idu[i] = r_id.search(idu[i]).groups(0)[0]
             if idu[i][-2:] == '/1':
-                print >> ofile_id1, idu[i]
-                print >> ofile_id2, '%s/2' %(idu[i][:-2])
+                print(idu[i], file=ofile_id1)
+                print('%s/2' %(idu[i][:-2]), file=ofile_id2)
             elif idu[i][-2:] == '/2':
-                print >> ofile_id2, idu[i]
-                print >> ofile_id1, '%s/1' %(idu[i][:-2])
+                print(idu[i], file=ofile_id2)
+                print('%s/1' %(idu[i][:-2]), file=ofile_id1)
             else:
-                print >> ofile_id1, idu[i]
-                print >> ofile_id2, idu[i]            
+                print(idu[i], file=ofile_id1)
+                print(idu[i], file=ofile_id2)            
 
     ofile_id1.close()
     ofile_id2.close()
@@ -230,15 +230,15 @@ def find_mate_pair_lib(path, mate_file):
     for file0 in flanking_files:
         if os.path.getsize(file0) == 0:
             continue
-        if verbose > 3: print file0
+        if verbose > 3: print(file0)
         if s_u.search(file0):
-            if verbose > 3: print 'unpaired'
+            if verbose > 3: print('unpaired')
             files_unpaired.append(file0)
         elif s_1.search(file0):
-            if verbose > 3: print 'p1'
+            if verbose > 3: print('p1')
             files_1.append(file0)
         elif s_2.search(file0):
-            if verbose > 3: print 'p2'
+            if verbose > 3: print('p2')
             files_2.append(file0)
     if len(files_1) >= 1 and len(files_2) >= 1:
         for i in range(len(files_1)):
@@ -251,7 +251,7 @@ def find_mate_pair_lib(path, mate_file):
                 if file1 == file2:
                     flanking_fq[file1][1] = files_1[i]
                     flanking_fq[file1][2] = files_2[j]
-                    if verbose > 3: print 'pair1: %s; pair2: %s' %(flanking_fq[file1][1], flanking_fq[file1][2])
+                    if verbose > 3: print('pair1: %s; pair2: %s' %(flanking_fq[file1][1], flanking_fq[file1][2]))
                     if len(files_unpaired) >= 1:
                         for k in range(len(files_unpaired)):
                             fileu = files_unpaired[k]
@@ -261,7 +261,7 @@ def find_mate_pair_lib(path, mate_file):
     else:
         files_unpaired = glob.glob('%s/flanking_seq/*flankingReads.fq' %(path))
         for i in range(len(files_unpaired)):
-            if verbose > 3: print 'all unpaired: %s' %(files_unpaired[i])
+            if verbose > 3: print('all unpaired: %s' %(files_unpaired[i]))
             flanking_fq[files_unpaired[i]]['unpaired'] = files_unpaired[i]
     return flanking_fq
 
@@ -298,7 +298,7 @@ def map_reads_bwa_mp_runner(flanking_fq_list, scripts, path, genome_file, fastq_
     if len(flanking_fq_list) == 2:
         fastq1  = flanking_fq_list[0]
         fastq2  = flanking_fq_list[1]
-        if verbose > 3: print '%s\n%s' %(fastq1, fastq2)
+        if verbose > 3: print('%s\n%s' %(fastq1, fastq2))
         fq_name = os.path.splitext(os.path.split(fastq1)[1])[0]
         if int(os.path.getsize(fastq1)) > 0 and int(os.path.getsize(fastq2)) > 0:
             #prepare paired file fastq1.matched, fastq2.matched and *.unPaired.fq
@@ -306,7 +306,7 @@ def map_reads_bwa_mp_runner(flanking_fq_list, scripts, path, genome_file, fastq_
             #cmd = '%s/clean_pairs_memory.pl -1 %s -2 %s 1> %s/flanking_seq/%s.unPaired.fq 2>> %s/%s.stderr' 
             #%(scripts, fastq1, fastq2, path, fq_name, path, target)
             cmd = '%s/clean_pairs_memory.py --fq1 %s --fq2 %s --repeat %s/te_containing_fq --fq_dir %s --seqtk %s' %(scripts, fastq1, fastq2, path, fastq_dir, seqtk)
-            if verbose > 3: print cmd
+            if verbose > 3: print(cmd)
             os.system(cmd)
         match1 = '%s.matched' %(fastq1)
         match2 = '%s.matched' %(fastq2)
@@ -375,8 +375,8 @@ def map_reads_bwa(scripts, flanking_fq, path, genome_file, fastq_dir, target, bw
     ##map reads with bwa
     #hg18.p00.chr1_22_reads_10X_100_500_1.te_repeat.flankingReads.bwa.mates.bam
     parameters = []
-    test_bam = '%s/bwa_aln/%s.%s%s.te_repeat.flankingReads.bwa.mates.bam' %(path, target, os.path.split(flanking_fq.keys()[0])[1], mate_file[0])
-    if verbose > 0: print 'testing if bam exists: %s' %(test_bam)
+    test_bam = '%s/bwa_aln/%s.%s%s.te_repeat.flankingReads.bwa.mates.bam' %(path, target, os.path.split(list(flanking_fq.keys())[0])[1], mate_file[0])
+    if verbose > 0: print('testing if bam exists: %s' %(test_bam))
         
     for file_pre in sorted(flanking_fq.keys()):
         #map reads as unpaired, treat all reads as single
@@ -386,9 +386,9 @@ def map_reads_bwa(scripts, flanking_fq, path, genome_file, fastq_dir, target, bw
         #    bwa_run(path, genome_file, fastq, fq_name, target, 'single')
         #    bwa_out_files.append('%s/bwa_aln/%s.%s.bwa.single.sam' %(path, target, fq_name))
         #map reads as paired, find paired and unpaired and map seperately
-        if verbose > 3: print 'pre: %s' %(file_pre)
+        if verbose > 3: print('pre: %s' %(file_pre))
         flanking_fq_list = []
-        if flanking_fq[file_pre].has_key(1) and flanking_fq[file_pre].has_key(2):
+        if 1 in flanking_fq[file_pre] and 2 in flanking_fq[file_pre]:
             flanking_fq_list = [flanking_fq[file_pre][1], flanking_fq[file_pre][2]]
         else:
             flanking_fq_list = [flanking_fq[file_pre]['unpaired']]
@@ -400,20 +400,20 @@ def map_reads_bwa(scripts, flanking_fq, path, genome_file, fastq_dir, target, bw
 
     ##mp runner
     if not os.path.isfile(test_bam):
-        if verbose > 0: print 'bam not exists, preceed with bwa to map the reads'
+        if verbose > 0: print('bam not exists, preceed with bwa to map the reads')
         collect_files = multiprocess_pool(parameters, cpu)
         for run_files_list in collect_files:
             bwa_out_files.extend(run_files_list[0]) 
             bwa_out_files_f.extend(run_files_list[1])
     else:
-        if verbose > 0: print 'bam exists, merge and sort bam files'
+        if verbose > 0: print('bam exists, merge and sort bam files')
         bwa_out_files   = glob.glob('%s/bwa_aln/*.te_repeat.flankingReads.bwa.*.bam' %(path))
         bwa_out_files_f = glob.glob('%s/bwa_aln/*.te_repeat.flankingReads.matched.fullreads.bwa.*.bam' %(path))
 
     ##merge all bwa results into one file
     bam2merge  = bwa_out_files
     merged_bwa = '%s/bwa_aln/%s.repeat.bwa.bam' %(path, target)
-    print 'mergeing bam file: %s/%s files' %(len(bam2merge), len(bwa_out_files))
+    print('mergeing bam file: %s/%s files' %(len(bam2merge), len(bwa_out_files)))
     if len(bam2merge) > 1:
         cmd1  = '%s merge -f %s %s' %(samtools, merged_bwa, ' '.join(bam2merge))
         cmd2  = '%s sort %s -o %s.sorted.bam' %(samtools, merged_bwa, os.path.splitext(merged_bwa)[0])
@@ -433,7 +433,7 @@ def map_reads_bwa(scripts, flanking_fq, path, genome_file, fastq_dir, target, bw
     ##merge all bwa results of fullreads into one file
     bam2merge_f  = bwa_out_files_f
     merged_bwa_f = '%s/bwa_aln/%s.repeat.fullreads.bwa.bam' %(path, target)
-    print 'mergeing fullread bam file: %s/%s files' %(len(bam2merge_f), len(bwa_out_files_f))
+    print('mergeing fullread bam file: %s/%s files' %(len(bam2merge_f), len(bwa_out_files_f)))
     if len(bam2merge_f) > 1:
         cmd4  = '%s merge -f %s %s' %(samtools, merged_bwa_f, ' '.join(bam2merge_f))
         cmd5  = '%s sort %s -o %s.sorted.bam' %(samtools, merged_bwa_f, os.path.splitext(merged_bwa_f)[0])
@@ -459,11 +459,11 @@ def map_reads_bwa(scripts, flanking_fq, path, genome_file, fastq_dir, target, bw
                 line = line.rstrip()
                 if len(line) > 2: 
                     unit = re.split(r'\t',line)
-                    if not info_chr_fh.has_key(unit[2]):
+                    if unit[2] not in info_chr_fh:
                         info_chr_fh[unit[2]] = open('%s/flanking_seq/%s.flankingReads.unPaired.info' %(path, unit[2]), 'w')
-                        print >> info_chr_fh[unit[2]], line
+                        print(line, file=info_chr_fh[unit[2]])
                     else:
-                        print >> info_chr_fh[unit[2]], line
+                        print(line, file=info_chr_fh[unit[2]])
     for temp_chr in info_chr_fh:
         info_chr_fh[temp_chr].close()
 
@@ -476,11 +476,11 @@ def map_reads_bwa(scripts, flanking_fq, path, genome_file, fastq_dir, target, bw
                 line = line.rstrip()
                 if len(line) > 2: 
                     unit = re.split(r'\t',line)
-                    if not repeat_chr_fh.has_key(unit[3]):
+                    if unit[3] not in repeat_chr_fh:
                         repeat_chr_fh[unit[3]] = open('%s/te_containing_fq/%s.read_repeat_name.split.txt' %(path, unit[3]), 'w')
-                        print >> repeat_chr_fh[unit[3]], line
+                        print(line, file=repeat_chr_fh[unit[3]])
                     else:
-                        print >> repeat_chr_fh[unit[3]], line
+                        print(line, file=repeat_chr_fh[unit[3]])
     for temp_chr in repeat_chr_fh:
         repeat_chr_fh[temp_chr].close() 
 
@@ -532,7 +532,7 @@ def map_reads_bowtie(scripts, flanking_fq, path, genome_file, fastq_dir, target,
             bowtie_run(path, genome_file, fastq, fq_name, target, bowtie2, relax_align, bowtie_sam, 'single')
             bowtie_out_files.append('%s/bowtie_aln/%s.%s.bowtie.single.out' %(path, target, fq_name))
         #map reads as paired, find paired and unpaired and map seperately
-        if flanking_fq[file_pre].has_key(1) and flanking_fq[file_pre].has_key(2):
+        if 1 in flanking_fq[file_pre] and 2 in flanking_fq[file_pre]:
             fastq1  = flanking_fq[file_pre][1]
             fastq2  = flanking_fq[file_pre][2]
             fq_name = os.path.splitext(os.path.split(fastq1)[1])[0]

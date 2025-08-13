@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import sys
 from collections import defaultdict
 import re
@@ -24,13 +24,13 @@ Parse blat or bam file. Write TE matched reads and their pairs into files.
 *.five_prime.fa/*.three_prime.fa: TE proportion of reads that matched to TE
 *.potential_tandemInserts_containing_reads.list.txt: reads have two or more matches on TE and on same strand. Tandem insertions and Highly false positive.
     '''
-    print message
+    print(message)
 
 def complement(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
     bases = list(seq)
     for i in range(len(bases)):
-        bases[i] = complement[bases[i]] if complement.has_key(bases[i]) else bases[i]
+        bases[i] = complement[bases[i]] if bases[i] in complement else bases[i]
     return ''.join(bases)
 
 def reverse_complement(seq):
@@ -83,8 +83,8 @@ def parse_align_blat(infile, tandem, verbose):
             #we expect more boundary and compare match length when having equal number of boundary
             boundary = boundary_qry_left + boundary_tar_left + boundary_qry_right + boundary_tar_right
             
-            if verbose >= 3: print >> sys.stderr, qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary
-            if coord.has_key(qName):
+            if verbose >= 3: print(qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary, file=sys.stderr)
+            if qName in coord:
                 ##keep the best match to TE
                 if int(boundary) > int(coord[qName]['boundary']):
                         addRecord = 1
@@ -113,7 +113,7 @@ def parse_align_blat(infile, tandem, verbose):
                 coord[qName]['tStart']   = tStart
                 coord[qName]['tEnd']     = tEnd
                 coord[qName]['boundary'] = boundary
-                if verbose >= 3: print >> sys.stderr, qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary
+                if verbose >= 3: print(qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary, file=sys.stderr)
     ofile.close()
     return coord
 
@@ -223,8 +223,8 @@ def parse_align_bwa(infile, tandem, verbose):
             #max boundary should be 2: 1. match one read end and one repeat end; 2. match two read end and internal of repeat
             #we expect more boundary and compare match length when having equal number of boundary
             boundary = boundary_qry_left + boundary_tar_left + boundary_qry_right + boundary_tar_right
-            if verbose >= 3: print >> sys.stderr, qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary
-            if coord.has_key(qName):
+            if verbose >= 3: print(qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary, file=sys.stderr)
+            if qName in coord:
                 ##keep the best match to TE
                 if int(boundary) > int(coord[qName]['boundary']):
                         addRecord = 1
@@ -252,7 +252,7 @@ def parse_align_bwa(infile, tandem, verbose):
                 coord[qName]['tStart']   = tStart
                 coord[qName]['tEnd']     = tEnd
                 coord[qName]['boundary'] = boundary
-                if verbose >= 3: print >> sys.stderr, qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary
+                if verbose >= 3: print(qName, qLen, qStart, qEnd, tName, tLen, tStart, tEnd, match, mismatch, boundary, file=sys.stderr)
     ofile.close()
     return coord
 
@@ -347,17 +347,17 @@ def main():
                 header = line[1:]
                 header = re.split(r'\s+', header)[0]
                 rl_name= header
-                seq    = filehd.next().rstrip()
-                qualh  = filehd.next().rstrip()
-                qual   = filehd.next().rstrip()
+                seq    = next(filehd).rstrip()
+                qualh  = next(filehd).rstrip()
+                qual   = next(filehd).rstrip()
                 #bam only
                 header1 = ''
                 if align_type == 'bam' and (header[-2:] == '/1' or header[-2:] == '/2'):
                     header1  = header[:-2]
-                    if coord.has_key(header1):
+                    if header1 in coord:
                         update_coord(header1, header, coord)
  
-                if coord.has_key(header):
+                if header in coord:
                     start    = int(coord[header]['start'])
                     length   = int(coord[header]['len'])
                     end      = int(coord[header]['end'])
@@ -372,7 +372,7 @@ def main():
                     #want to cut and keep anything not matching to database TE
                     trimmed_seq  = ''
                     trimmed_qual = ''
-                    if verbose >= 3: print >> sys.stderr, 'Check:', header, start, end, length, tName, tStart, tEnd, tLen, mismatch, match, strand
+                    if verbose >= 3: print('Check:', header, start, end, length, tName, tStart, tEnd, tLen, mismatch, match, strand, file=sys.stderr)
                     #print 'check2: %s\t%s\t%s'  %(str(tStart), str((length - (match + mismatch))), str((mismatch/(match + mismatch))))
                     ##query read overlaps 5' end of database TE & trimmed seq > cutoff
                     #int(start) <= 2 or int(end) >= int(length) - 3, we need the reads mapped boundary to align with te
@@ -402,10 +402,10 @@ def main():
                             seq_desc = ''
                             seq_id   = '%s:end:5' %(seq_id)
                             header = '%s%s' %(seq_id, seq_desc)
-                        if verbose >= 3: print >> sys.stderr, '1: trimmed: %s %s %s' %(rl_name, trimmed_seq, str(end))
+                        if verbose >= 3: print('1: trimmed: %s %s %s' %(rl_name, trimmed_seq, str(end)), file=sys.stderr)
                         if len(trimmed_seq) >= len_cutoff_l:
-                            print >> ofile_rr, '%s\t%s\t%s' %(rl_name, tName, strand)
-                            print >> ofile_te5, '>%s %s..%s matches %s:%s..%s mismatches:%s\n%s' %(header, qS, qE, TE, tS, tE, mismatch, te_subseq)
+                            print('%s\t%s\t%s' %(rl_name, tName, strand), file=ofile_rr)
+                            print('>%s %s..%s matches %s:%s..%s mismatches:%s\n%s' %(header, qS, qE, TE, tS, tE, mismatch, te_subseq), file=ofile_te5)
                     #query read overlaps 3' end of database TE & trimmed seq > cutoff
                     #elif tEnd == tLen - 1 and (int(start) <= 2 or int(end) >= int(length) - 3) and (length - (match + mismatch)) > len_cutoff and (float(mismatch)/(float(match) + float(mismatch))) <= mismatch_allowance:
                     #elif tEnd >= (tLen - 3) and (int(start) <= 2 or int(end) >= int(length) - 3) and (length - (match + mismatch)) > len_cutoff_m and int(mismatch) <= int(mismatch_allowance):
@@ -430,10 +430,10 @@ def main():
                             seq_desc = ''
                             seq_id   = '%s:start:3' %(seq_id)
                             header = '%s%s' %(seq_id, seq_desc)
-                        if verbose >= 3: print >> sys.stderr, '2: trimmed: %s %s %s' %(rl_name, trimmed_seq, str(end))
+                        if verbose >= 3: print('2: trimmed: %s %s %s' %(rl_name, trimmed_seq, str(end)), file=sys.stderr)
                         if len(trimmed_seq) >= len_cutoff_l:
-                            print >> ofile_rr, '%s\t%s\t%s' %(rl_name, tName, strand)
-                            print >> ofile_te3, '>%s %s..%s matches %s:%s..%s mismatches:%s\n%s' %(header, qS, qE, TE, tS, tE, mismatch, te_subseq)
+                            print('%s\t%s\t%s' %(rl_name, tName, strand), file=ofile_rr)
+                            print('>%s %s..%s matches %s:%s..%s mismatches:%s\n%s' %(header, qS, qE, TE, tS, tE, mismatch, te_subseq), file=ofile_te3)
                     #query read overlaps internal of database TE, no need to trim. These reads pairs will be used as supporting reads
                     #in relocate_align, we get the reads in trimmed files and their pairs.
                     #elif start == 0 and end + 1 == length and (float(mismatch)/(float(match) + float(mismatch))) <= mismatch_allowance:
@@ -446,13 +446,13 @@ def main():
                         seq_desc = ''
                         seq_id   = '%s:middle' %(seq_id)
                         header = '%s%s' %(seq_id, seq_desc)
-                        print >> ofile_rr, '%s\t%s\t%s' %(rl_name, tName, strand) 
-                        if verbose >= 3: print >> sys.stderr, '3: trimmed: %s %s %s' %(rl_name, trimmed_seq, str(end))
+                        print('%s\t%s\t%s' %(rl_name, tName, strand), file=ofile_rr) 
+                        if verbose >= 3: print('3: trimmed: %s %s %s' %(rl_name, trimmed_seq, str(end)), file=sys.stderr)
                     ##trimmed reads
                     if len(trimmed_seq) >= len_cutoff_l:
-                        print '@%s\n%s\n%s\n%s' %(header, trimmed_seq, qualh, trimmed_qual)
+                        print('@%s\n%s\n%s\n%s' %(header, trimmed_seq, qualh, trimmed_qual))
                     ##any read that was in the blat file is written here
-                    print >> ofile_fq, '@%s\n%s\n%s\n%s' %(header, seq, qualh, qual)
+                    print('@%s\n%s\n%s\n%s' %(header, seq, qualh, qual), file=ofile_fq)
         filehd.close()
         ofile_te5.close()
         ofile_te3.close()

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import sys
 from collections import defaultdict
 import re
@@ -32,7 +32,7 @@ python relocaTE2.py --te_fasta $repeat --genome_fasta $genome --fq_dir $fq_d --o
 
 
     '''
-    print message
+    print(message)
 
 def parse_config(infile):
     data = defaultdict(lambda : str())
@@ -41,7 +41,7 @@ def parse_config(infile):
             line = line.rstrip()
             if not line.startswith(r'#') and '=' in line:
                 unit = re.split(r'\=',line)
-                if not data.has_key(unit[0]):
+                if unit[0] not in data:
                     data[unit[0]] = unit[1]
     return data
 
@@ -63,7 +63,7 @@ def createdir(dirname):
 
 def writefile(outfile, lines):
     ofile = open(outfile, 'w')
-    print >> ofile, lines
+    print(lines, file=ofile)
     ofile.close()
 
 #split large fastq file into 1M reads chunks
@@ -112,7 +112,7 @@ def mp_pool_function(function, parameters, cpu):
     imap_it = pool.map(function, tuple(parameters))
     collect_list = []
     for x in imap_it:
-        print 'status: %s' %(x)
+        print('status: %s' %(x))
         collect_list.append(x)
     return collect_list
 
@@ -130,7 +130,7 @@ def mp_pool(cmds, cpu):
     imap_it = pool.map(shell_runner, cmds)
     count= 0
     for x in imap_it:
-        print 'job: %s' %(cmds[count])
+        print('job: %s' %(cmds[count]))
         #print 'status: %s' %(x)
         count += 1
 
@@ -138,7 +138,7 @@ def mp_pool(cmds, cpu):
 def single_run(cmds):
     for cmd in cmds:
         status = shell_runner(cmd)
-        print 'job: %s' %(cmd)
+        print('job: %s' %(cmd))
         #print 'status: %s' %(status)
 
 def existingTE_RM_ALL(top_dir, infile):
@@ -168,7 +168,7 @@ def existingTE_RM_ALL(top_dir, infile):
                         unit[14] =re.sub(r'\(|\)', '', unit[14])
                         if int(unit[14]) == 0:
                             intact = 1
-                    print >> ofile_RM, '%s\t%s\t%s\t%s:%s-%s\t%s\t%s' %(unit[5], str(int(unit[6])), str(int(unit[7])), unit[10],unit[6],unit[7], intact, '+')
+                    print('%s\t%s\t%s\t%s:%s-%s\t%s\t%s' %(unit[5], str(int(unit[6])), str(int(unit[7])), unit[10],unit[6],unit[7], intact, '+'), file=ofile_RM)
                 elif unit[9] == 'C':
                     #for i in range(int(unit[6])-2, int(unit[6])+3):
                     #    existingTE_inf[unit[5]]['start'][int(i)] = 1
@@ -183,7 +183,7 @@ def existingTE_RM_ALL(top_dir, infile):
                         unit[12] =re.sub(r'\(|\)', '', unit[12])
                         if int(unit[12]) == 0:
                             intact = 1
-                    print >> ofile_RM, '%s\t%s\t%s\t%s:%s-%s\t%s\t%s' %(unit[5], str(int(unit[6])), str(int(unit[7])), unit[10],unit[6],unit[7], intact, '-')
+                    print('%s\t%s\t%s\t%s:%s-%s\t%s\t%s' %(unit[5], str(int(unit[6])), str(int(unit[7])), unit[10],unit[6],unit[7], intact, '-'), file=ofile_RM)
     ofile_RM.close()
 
 
@@ -240,8 +240,8 @@ def main():
             fastq_dir = os.path.abspath(args.fq_dir)
 
 
-    if args.verbose > 0: print fastq_dir
-    if args.verbose > 0: print mode
+    if args.verbose > 0: print(fastq_dir)
+    if args.verbose > 0: print(mode)
 
     #
     if args.dry_run is False:
@@ -325,18 +325,18 @@ def main():
     #samtools = '/opt/linux/centos/7.x/x86_64/pkgs/samtools/0.1.19/bin/samtools'
     #seqtk = '/rhome/cjinfeng/BigData/software/seqtk-master/seqtk'
     tools = parse_config('%s/../CONFIG' %(os.path.dirname(sys.argv[0])))
-    blat      = tools['blat'] if tools.has_key('blat') else blat
-    bwa       = tools['bwa'] if tools.has_key('bwa') else bwa
-    bowtie2   = tools['bowtie2'] if tools.has_key('bowtie2') else bowtie2
-    bowtie2_build = tools['bowtie2_build'] if tools.has_key('bowtie2_build') else bowtie2_build
-    bedtools  = tools['bedtools'] if tools.has_key('bedtools') else bedtools
-    samtools  = tools['samtools'] if tools.has_key('samtools') else samtools
-    seqtk     = tools['seqtk'] if tools.has_key('seqtk') else seqtk
+    blat      = tools['blat'] if 'blat' in tools else blat
+    bwa       = tools['bwa'] if 'bwa' in tools else bwa
+    bowtie2   = tools['bowtie2'] if 'bowtie2' in tools else bowtie2
+    bowtie2_build = tools['bowtie2_build'] if 'bowtie2_build' in tools else bowtie2_build
+    bedtools  = tools['bedtools'] if 'bedtools' in tools else bedtools
+    samtools  = tools['samtools'] if 'samtools' in tools else samtools
+    seqtk     = tools['seqtk'] if 'seqtk' in tools else seqtk
     fastq_split = '%s/fastq_split.pl' %(RelocaTE_bin)
 
     #MSU_r7.fa.bwt
     if not os.path.isfile('%s.bwt' %(reference)):
-        print 'Reference need to be indexed by bwa: %s' %(reference)
+        print('Reference need to be indexed by bwa: %s' %(reference))
         os.system('%s index %s' %(bwa, reference))
         #exit()
  
@@ -395,9 +395,9 @@ def main():
         test_fq = '%s/p00.%s' %(split_outdir, os.path.split(fastqs[0])[1])
         if os.path.splitext(fastqs[0])[1] == '.gz': 
             test_fq = '%s/p00.%s' %(split_outdir, os.path.splitext(os.path.split(fastqs[0])[1])[0])
-        print 'testing if sub fastq exist: %s' %(test_fq)
+        print('testing if sub fastq exist: %s' %(test_fq))
         if os.path.isfile(test_fq):
-            print 'sub fastq file exists: fill fastq_dict'
+            print('sub fastq file exists: fill fastq_dict')
             subfqs = glob.glob('%s/*.f*q' %(split_outdir))
             for subfq in subfqs:
                 subfa = '%s.fa' %(os.path.splitext(subfq)[0])
@@ -406,7 +406,7 @@ def main():
                 else:
                     fastq_dict[subfq] = '1'
         else:
-            print 'sub fastq does not exist: preceed with split and fill fastq_dict'
+            print('sub fastq does not exist: preceed with split and fill fastq_dict')
             for fq in fastqs:
                 parameters.append([fq, split_outdir, fa_convert, seqtk, fastq_split])
             ##split fastq to use multiprocess run jobs
@@ -421,10 +421,10 @@ def main():
                         fastq_dict[fq_subfile] = '1'
         ##convert fastq to fasta use multiprocess run jobs
         if fa_convert == 1:
-            test_fa = fastq_dict.values()[0]
-            print 'testing if sub fasta exist: %s' %(test_fa)
+            test_fa = list(fastq_dict.values())[0]
+            print('testing if sub fasta exist: %s' %(test_fa))
             if not os.path.isfile(test_fa) and '2' in list(args.step):
-                print 'sub fasta file does not exist: convert'
+                print('sub fasta file does not exist: convert')
                 createdir('%s/shellscripts/step_2' %(args.outdir))
                 for subfq in sorted(fastq_dict.keys()):
                     subfa = fastq_dict[subfq] 
@@ -435,11 +435,11 @@ def main():
                     shells_step2.append('sh %s' %(step2_file))
                     writefile(step2_file, fq2fa)
             elif os.path.isfile(test_fa) and '2' in list(args.step):
-                print 'sub fasta file exists'
+                print('sub fasta file exists')
                 step2_file = '%s/shellscripts/step_2_not_needed_fq_already_converted_2_fa' %(args.outdir)
                 writefile(step2_file, '')
             else:
-                print 'skip step2 converting fastq to fasta'
+                print('skip step2 converting fastq to fasta')
             #run job in this script
             if args.run and len(shells_step2) > 0 and '2' in list(args.step):
                 if int(args.cpu) == 1:
@@ -642,17 +642,17 @@ def main():
         if r_te.search(reference_ins_flag) and not os.path.isfile(test_bed):
             existingTE_RM_ALL(top_dir, reference_ins_flag)
     else:
-        print 'Existing TE file does not exists or zero size'
+        print('Existing TE file does not exists or zero size')
  
     #step5 find insertions
-    print 'Step5: Find non-reference insertions'
+    print('Step5: Find non-reference insertions')
     shells_step5 = []
     ids = fasta_id(reference)
     createdir('%s/shellscripts/step_5' %(args.outdir))
     step5_count = 0
     #ids = ['chr13']
     for chrs in ids:
-        print 'find insertions on %s' %(chrs)
+        print('find insertions on %s' %(chrs))
         step5_cmd = 'python %s/relocaTE_insertionFinder.py %s/repeat/bwa_aln/%s.repeat.bwa.sorted.bam %s %s repeat %s/regex.txt %s 100 %s %s 0 %s %s %s' %(RelocaTE_bin, args.outdir, ref, chrs, reference, args.outdir, args.sample, reference_ins_flag, args.mismatch_junction, args.size, args.verbose, bedtools)
         step5_file= '%s/shellscripts/step_5/%s.repeat.findSites.sh' %(args.outdir, step5_count)
         if '5' in list(args.step):
@@ -670,7 +670,7 @@ def main():
 
 
     #step6 find transposons on reference: reference only or shared
-    print 'Step6: Find reference insertions'
+    print('Step6: Find reference insertions')
     shells_step6 = []
     createdir('%s/shellscripts/step_6' %(args.outdir))
     step6_count = 0
