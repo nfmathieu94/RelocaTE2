@@ -13,7 +13,7 @@ def createdir(dirname):
 ##write content to new file
 def writefile(outfile, lines):
     ofile = open(outfile, 'w')
-    print >> ofile, lines
+    print(lines, file=ofile)
     ofile.close()
 
 
@@ -24,7 +24,7 @@ def mp_pool_function(function, parameters, cpu):
     imap_it = pool.map(function, tuple(parameters))
     collect_list = []
     for x in imap_it:
-        print 'status: %s' %(x)
+        print('status: %s' %(x))
         collect_list.append(x)
     return collect_list
 
@@ -43,16 +43,16 @@ def mp_pool(cmds, cpu):
     imap_it = pool.map(shell_runner, cmds)
     count= 0
     for x in imap_it:
-        print 'job: %s' %(cmds[count])
-        print 'status: %s' %(x)
+        print('job: %s' %(cmds[count]))
+        print('status: %s' %(x))
         count += 1
 
 ##run job by sequence
 def single_run(cmds):
     for cmd in cmds:
         status = shell_runner(cmd)
-        print 'job: %s' %(cmd)
-        print 'status: %s' %(status)
+        print('job: %s' %(cmd))
+        print('status: %s' %(status))
 
 
 
@@ -69,7 +69,7 @@ def complement(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
     bases = list(seq)
     for i in range(len(bases)):
-        bases[i] = complement[bases[i]] if complement.has_key(bases[i]) else bases[i]
+        bases[i] = complement[bases[i]] if bases[i] in complement else bases[i]
     return ''.join(bases)
 
 ##reverse_complement sequence

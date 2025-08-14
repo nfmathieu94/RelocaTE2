@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import sys
 from collections import defaultdict
 import re
@@ -15,7 +15,7 @@ Takes pairs of fastq files, which is trimmed from repeat blat results seperately
 *.matched: contain reads that have mates in eigher trimmed fastq or in original fastq (whether includes these in TE_containing need to test).
 *.unPaired.fq: contains trimmed reads that do not have mates found and contain the mate pairs of reads that matched to middle of repeat only if the mate pair is not repeat, but not reads themselve as they are part of repeat (whether includes these mates in TE_containing need to test).
     '''
-    print message
+    print(message)
 
 #we only need these reads matched to TE but not used as flanking_fq
 #store only these reads not labeled with @read_500_403/1:middle or @read_500_403/1:end:5
@@ -41,9 +41,9 @@ def parse_fastq(fq_file):
                 header = m2.groups(0)[0]
                 read_t = m2.groups(0)[1]
             #header = re.sub(r'\/.*', '', header)
-            seq    = filehd.next().rstrip()
-            qualh  = filehd.next().rstrip()
-            qual   = filehd.next().rstrip()
+            seq    = next(filehd).rstrip()
+            qualh  = next(filehd).rstrip()
+            qual   = next(filehd).rstrip()
             data[header] = read_t
             #print header, read_t
     return data
@@ -71,9 +71,9 @@ def parse_fastq_flanking(fq_file):
                 header_to_store = m2.groups(0)[0]
             #print header_to_store, pos
             #header = re.sub(r'\/.*', '', header)
-            seq    = filehd.next().rstrip()
-            qualh  = filehd.next().rstrip()
-            qual   = filehd.next().rstrip()
+            seq    = next(filehd).rstrip()
+            qualh  = next(filehd).rstrip()
+            qual   = next(filehd).rstrip()
             record = '@%s\n%s\n%s\n%s' %(header, seq, qualh, qual)
             fq_dict[header_to_store] = [pos, record, header]
             #print fq_dict[header_to_store][0], fq_dict[header_to_store][1]
@@ -96,9 +96,9 @@ def parse_fastq_default(fq_file):
             elif m2:
                 header_to_store = m2.groups(0)[0]
             #header = re.sub(r'\/.*', '', header)
-            seq    = filehd.next().rstrip()
-            qualh  = filehd.next().rstrip()
-            qual   = filehd.next().rstrip()
+            seq    = next(filehd).rstrip()
+            qualh  = next(filehd).rstrip()
+            qual   = next(filehd).rstrip()
             record = '@%s\n%s\n%s\n%s' %(header, seq, qualh, qual)
             fq_dict[header_to_store] = record
     return fq_dict
@@ -117,19 +117,19 @@ def match_trimmed(fq1, fq2, fq1_match, fq2_match, fq_unPaired, fq_unPaired_info)
         if not fq2_dict[hd][0] == 'middle':
         #fq2 is not middle
             #print hd
-            if fq1_dict.has_key(hd) and fq1_dict[hd][0] != 'middle':
+            if hd in fq1_dict and fq1_dict[hd][0] != 'middle':
             #paired and both matched to end of repeat, same end or different end?
             ##these informations should be recorded and used as supporting reads
                 #print '1'
-                print >> ofile1, fq1_dict[hd][1]
-                print >> ofile2, fq2_dict[hd][1]
+                print(fq1_dict[hd][1], file=ofile1)
+                print(fq2_dict[hd][1], file=ofile2)
                 del fq1_dict[hd]
                 del fq2_dict[hd]
-            elif fq1_dict.has_key(hd) and fq1_dict[hd][0] == 'middle':
+            elif hd in fq1_dict and fq1_dict[hd][0] == 'middle':
             #paired but mate in fq1 is middle, write fq2 to unpaired and delete both
                 #print '2'
-                print >> ofile3, fq2_dict[hd][1]
-                print >> ofile4, '%s\t%s' %(fq2_dict[hd][2], 2)
+                print(fq2_dict[hd][1], file=ofile3)
+                print('%s\t%s' %(fq2_dict[hd][2], 2), file=ofile4)
                 del fq1_dict[hd]
                 del fq2_dict[hd]
             else:
@@ -138,14 +138,14 @@ def match_trimmed(fq1, fq2, fq1_match, fq2_match, fq_unPaired, fq_unPaired_info)
                 pass
         else:
         #fq2 is middle
-            if fq1_dict.has_key(hd) and fq1_dict[hd][0] != 'middle':
+            if hd in fq1_dict and fq1_dict[hd][0] != 'middle':
             #paired but mate in fq2 is middle, write fq1 to unpaired and delete both
             #these informations should be recorded and used as supporting reads
-                print >> ofile3, fq1_dict[hd][1]
-                print >> ofile4, '%s\t%s' %(fq1_dict[hd][2], 1)
+                print(fq1_dict[hd][1], file=ofile3)
+                print('%s\t%s' %(fq1_dict[hd][2], 1), file=ofile4)
                 del fq1_dict[hd]
                 del fq2_dict[hd]
-            elif fq1_dict.has_key(hd) and fq1_dict[hd][0] == 'middle':
+            elif hd in fq1_dict and fq1_dict[hd][0] == 'middle':
             #paired but both in middle, useless for insertion delete both
                 del fq1_dict[hd]
                 del fq2_dict[hd]
@@ -170,30 +170,30 @@ def match_support(fq1_dict, fq2_0, fq2_te, fq1_match, fq2_match, fq_unPaired, fq
     fq2_te_dict = parse_fastq(fq2_te)
     for hd in sorted(fq1_dict.keys()):
         if fq1_dict[hd][0] == 'middle':
-            if fq2_te_dict.has_key(hd):
+            if hd in fq2_te_dict:
             #reads have their mate matched to repeat but not at start/end or middle
             #delete reads, useless for insertion
                 del fq1_dict[hd]
         else:
-            if fq2_te_dict.has_key(hd):
+            if hd in fq2_te_dict:
             #reads have their mate matched to repeat but not at start/end or middle
             #reads matched to start/end, write to unPaired and delete from fq1
-                print >> ofile3, fq1_dict[hd][1]
-                print >> ofile5, '%s\t%s' %(fq1_dict[hd][2], read_flag)
+                print(fq1_dict[hd][1], file=ofile3)
+                print('%s\t%s' %(fq1_dict[hd][2], read_flag), file=ofile5)
                 del fq1_dict[hd]
     
     #deal with mates in original fastq
     #find the mate of one reads in large fastq file or bam file is slow, how to speed up this. Maybe the only way to speed up is get clipped reads
     #and their mates, unproperly mapped and their mates into fastq and start from there.
-    if fq2_te_dict.values()[0] == '1':
+    if list(fq2_te_dict.values())[0] == '1':
         ofile4 = open(fq1_id_temp, 'w')
         for hd in sorted(fq1_dict.keys()):
-            print >> ofile4, hd
+            print(hd, file=ofile4)
         ofile4.close()
     else:
         ofile4 = open(fq1_id_temp, 'w')
         for hd in sorted(fq1_dict.keys()):
-            print >> ofile4, '%s%s' %(hd, fq2_te_dict.values()[0])
+            print('%s%s' %(hd, list(fq2_te_dict.values())[0]), file=ofile4)
         ofile4.close()
     #get subset of fastq from original fastq
     #cmd = 'seqtk subseq %s %s > %s' %(fq2_0, fq1_id_temp, fq2_0_temp)
@@ -205,20 +205,20 @@ def match_support(fq1_dict, fq2_0, fq2_te, fq1_match, fq2_match, fq_unPaired, fq
     #write paired and unPaired reads 
     for hd in sorted(fq1_dict.keys()):
         if fq1_dict[hd][0] == 'middle':
-            if fq2_0_temp_dict.has_key(hd):
+            if hd in fq2_0_temp_dict:
             ##use mates as supporting reads
-                print >> ofile3, fq2_0_temp_dict[hd]
+                print(fq2_0_temp_dict[hd], file=ofile3)
             else:
             ##no mates found, useless. impossible if input is paired
                 pass
         else:
-            if fq2_0_temp_dict.has_key(hd):
+            if hd in fq2_0_temp_dict:
             ##paired, write both
-                print >> ofile1, fq1_dict[hd][1]
-                print >> ofile2, fq2_0_temp_dict[hd]
+                print(fq1_dict[hd][1], file=ofile1)
+                print(fq2_0_temp_dict[hd], file=ofile2)
             else:
             ##no mates found, write unpaired. impossible if input is paired
-                print >> ofile3, fq1_dict[hd][1]
+                print(fq1_dict[hd][1], file=ofile3)
     ofile1.close()
     ofile2.close()
     ofile3.close()

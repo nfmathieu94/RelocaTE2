@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import sys
 from collections import defaultdict
 import re
@@ -11,7 +11,7 @@ def usage():
 python Python.py --input ALL.all_nonref_insert.gff --refte ~/BigData/00.RD/RelocaTE_i/Simulation/Reference/MSU7.Chr3.fa.RepeatMasker.out.bed
 
     '''
-    print message
+    print(message)
 
 def fasta_id(fastafile):
     fastaid = defaultdict(str)
@@ -45,7 +45,7 @@ def txt2gff(infile, outfile, ins_type):
                 r_supp  = re.sub(r'\D+', '', unit[10])
                 l_supp  = re.sub(r'\D+', '', unit[11])
                 r_id    = 'repeat_%s_%s_%s' %(chro, start, end)
-                print >> ofile, '%s\t%s\t%s\t%s\t%s\t.\t%s\t.\tID=%s;Name=%s;TSD=%s;Note=%s;Right_junction_reads=%s;Left_junction_reads=%s;Right_support_reads=%s;Left_support_reads=%s;' %(chro, 'RelocaTE2', unit[2], start, end, strand, r_id, te_name, unit[1], ins_type, r_count, l_count, r_supp, l_supp)
+                print('%s\t%s\t%s\t%s\t%s\t.\t%s\t.\tID=%s;Name=%s;TSD=%s;Note=%s;Right_junction_reads=%s;Left_junction_reads=%s;Right_support_reads=%s;Left_support_reads=%s;' %(chro, 'RelocaTE2', unit[2], start, end, strand, r_id, te_name, unit[1], ins_type, r_count, l_count, r_supp, l_supp), file=ofile)
     ofile.close()
 
 #Chr3	not.give	RelocaTE_i	283493	283504	.	-	.	ID=repeat_Chr3_283493_283504;TSD=ATGCCATCAAGG;Note=Non-reference,
@@ -63,7 +63,7 @@ def Overlap_TE_boundary(prefix, refte, distance, bedtools):
     os.system('%s window -w %s -a %s -b %s > %s' %(bedtools, int(distance) + 10, final_gff, refte, infile))
     if not os.path.isfile(infile) or not os.path.getsize(infile) > 0:
         return 1
-    print 'filter existing TE: %s bp' %(distance) 
+    print('filter existing TE: %s bp' %(distance)) 
     ofile  = open(outfile, 'w') 
     with open (infile, 'r') as filehd:
         for line in filehd:
@@ -72,7 +72,7 @@ def Overlap_TE_boundary(prefix, refte, distance, bedtools):
                 unit = re.split(r'\t',line)
                 temp = defaultdict(str)
                 attrs = re.split(r';', unit[8])
-                print line
+                print(line)
                 for attr in attrs:
                     if not attr == '':
                         attr = re.sub(r':', '=', attr)
@@ -83,24 +83,24 @@ def Overlap_TE_boundary(prefix, refte, distance, bedtools):
                     #within 10 bp interval of intact TE boundary
                     #print >> ofile, '\t'.join(unit[:9])
                     if int(unit[3]) >= int(unit[10]) - int(distance) and int(unit[3]) <= int(unit[10]) + int(distance):
-                        print >> ofile, '\t'.join(unit[:9])
+                        print('\t'.join(unit[:9]), file=ofile)
                     elif int(unit[3]) >= int(unit[11]) - int(distance) and int(unit[3]) <= int(unit[11]) + int(distance):
-                        print >> ofile, '\t'.join(unit[:9])
+                        print('\t'.join(unit[:9]), file=ofile)
                     elif int(unit[4]) >= int(unit[10]) - int(distance) and int(unit[4]) <= int(unit[10]) + int(distance):
-                        print >> ofile, '\t'.join(unit[:9])
+                        print('\t'.join(unit[:9]), file=ofile)
                     elif int(unit[4]) >= int(unit[11]) - int(distance) and int(unit[4]) <= int(unit[11]) + int(distance):
-                        print >> ofile, '\t'.join(unit[:9])
+                        print('\t'.join(unit[:9]), file=ofile)
     ofile.close()
     if not os.path.isfile(outfile) or not os.path.getsize(outfile) > 0:
         #nothing to remove
-        print 'nothing to remove'
+        print('nothing to remove')
         os.system('mv %s %s' %(final_gff, raw_gff))
         os.system('cp %s %s' %(raw_gff, all_gff))
         os.system('grep -v \"singleton\|insufficient_data\|supporting_reads\" %s > %s' %(raw_gff, final_gff))
         os.system('grep -v -e \"Right_junction_reads=1;Left_junction_reads=0\" -e \"Right_junction_reads=0;Left_junction_reads=1\" %s > %s' %(final_gff, high_gff)) 
         os.system('rm %s.overlap %s.remove.gff' %(prefix, prefix))
     else:
-        print 'remove by bedtool'
+        print('remove by bedtool')
         os.system('%s intersect -v -a %s -b %s > %s' %(bedtools, final_gff, outfile, clean_gff))
         os.system('mv %s %s' %(final_gff, raw_gff))
         os.system('cp %s %s' %(clean_gff, all_gff))
